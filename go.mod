@@ -1,4 +1,4 @@
-module github.com/kenchi-huang/go-task-queue
+module github.com/kenchi-huang/project-ponos
 
 go 1.26.5
 
