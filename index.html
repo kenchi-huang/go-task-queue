@@ -1,0 +1,208 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Aether Queue Dashboard</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap');
+        body {
+            background-color: #0f172a;
+            color: #f8fafc;
+            font-family: 'Inter', sans-serif;
+            margin: 0;
+            padding: 60px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        .header {
+            width: 100%;
+            max-width: 1000px;
+            margin-bottom: 40px;
+        }
+        .header h1 {
+            font-weight: 800;
+            margin: 0;
+            background: -webkit-linear-gradient(45deg, #00f2fe, #4facfe);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 20px;
+            width: 100%;
+            max-width: 1000px;
+        }
+        .card {
+            background: rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 16px;
+            padding: 30px;
+            display: flex;
+            flex-direction: column;
+            box-shadow: 0 4px 30px rgba(0, 0, 0, 0.1);
+            transition: transform 0.2s;
+        }
+        .card:hover {
+            transform: translateY(-5px);
+        }
+        .card h3 {
+            margin: 0 0 10px 0;
+            font-size: 14px;
+            color: #94a3b8;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+        .card .value {
+            font-size: 48px;
+            font-weight: 800;
+            margin: 0;
+        }
+        .controls {
+            margin-top: 60px;
+            display: flex;
+            gap: 15px;
+            align-items: center;
+        }
+        .input-field {
+            padding: 16px;
+            font-size: 16px;
+            border-radius: 12px;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            background: rgba(0, 0, 0, 0.3);
+            color: white;
+            width: 100px;
+            text-align: center;
+        }
+        .btn {
+            padding: 16px 32px;
+            font-size: 16px;
+            font-weight: 800;
+            color: #fff;
+            border: none;
+            border-radius: 30px;
+            cursor: pointer;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+        .btn-primary {
+            background: linear-gradient(45deg, #00f2fe, #4facfe);
+            box-shadow: 0 0 20px rgba(0, 242, 254, 0.4);
+        }
+        .btn-danger {
+            background: linear-gradient(45deg, #ff0844, #ffb199);
+            box-shadow: 0 0 20px rgba(255, 8, 68, 0.4);
+        }
+        .btn:hover {
+            transform: scale(1.05);
+        }
+        #active-workers { color: #00f2fe; }
+        #queue-depth { color: #a78bfa; }
+        #success-rate { color: #4ade80; }
+        #failed-jobs { color: #f87171; }
+    </style>
+</head>
+<body>
+
+    <div class="header">
+        <h1>PROJECT PONOS: JOB QUEUE SIMULATOR</h1>
+        <p>Live Task Engine Metrics</p>
+    </div>
+
+    <div class="grid">
+        <div class="card">
+            <h3>Active Workers</h3>
+            <p class="value" id="active-workers">0</p>
+        </div>
+        <div class="card">
+            <h3>Queue Depth</h3>
+            <p class="value" id="queue-depth">0</p>
+        </div>
+        <div class="card">
+            <h3>Successes</h3>
+            <p class="value" id="success-rate">0</p>
+        </div>
+        <div class="card">
+            <h3>Failed Jobs</h3>
+            <p class="value" id="failed-jobs">0</p>
+        </div>
+    </div>
+
+    <div class="controls">
+        <input type="number" id="job-count" class="input-field" value="1" min="1">
+        <button class="btn btn-primary" onclick="enqueueJobs(false)">ENQUEUE CUSTOM</button>
+        <button class="btn btn-danger" onclick="enqueueJobs(true)">FLOOD QUEUE (5,000)</button>
+    </div>
+
+    <div class="controls" style="margin-top: 20px; background: rgba(0,0,0,0.2); padding: 20px; border-radius: 16px;">
+        <h3 style="margin: 0 15px 0 0; color: #94a3b8;">CONFIG:</h3>
+        <span style="color: #94a3b8;">Min Workers:</span>
+        <input type="number" id="min-workers" class="input-field" value="1" min="1" style="width: 60px;">
+        <span style="color: #94a3b8;">Max Workers:</span>
+        <input type="number" id="max-workers" class="input-field" value="10" min="1" style="width: 60px;">
+        <button class="btn btn-primary" style="padding: 10px 20px;" onclick="updateConfig()">UPDATE</button>
+    </div>
+
+    <div class="jobs-container" style="width: 100%; max-width: 1000px; margin-top: 40px; background: rgba(255,255,255,0.05); backdrop-filter: blur(10px); border: 1px solid rgba(255,255,255,0.1); border-radius: 16px; padding: 30px; box-sizing: border-box; max-height: 400px; overflow-y: auto; box-shadow: 0 4px 30px rgba(0, 0, 0, 0.1);">
+        <h3 style="margin: 0 0 20px 0; color: #94a3b8; font-size: 14px; text-transform: uppercase; letter-spacing: 1px;">Live Job Feed (Showing latest 50)</h3>
+        <table style="width: 100%; text-align: left; border-collapse: collapse;">
+            <thead>
+                <tr style="border-bottom: 1px solid rgba(255,255,255,0.1); color: #94a3b8;">
+                    <th style="padding-bottom: 10px;">Job ID</th>
+                    <th style="padding-bottom: 10px;">Status</th>
+                </tr>
+            </thead>
+            <tbody id="job-list">
+                <!-- Javascript will inject rows here -->
+            </tbody>
+        </table>
+    </div>
+
+    <script>
+        setInterval(() => {
+            fetch('/metrics')
+                .then(res => res.json())
+                .then(data => {
+                    document.getElementById('active-workers').innerText = data['Active Workers'];
+                    document.getElementById('queue-depth').innerText = data['Queue Depth'];
+                    document.getElementById('success-rate').innerText = data['Successes'];
+                    document.getElementById('failed-jobs').innerText = data['Failures'];
+
+                    if (data['Jobs']) {
+                        const tbody = document.getElementById('job-list');
+                        tbody.innerHTML = ''; 
+                        // To keep the UI fast, we only render the last 50 jobs
+                        const entries = Object.entries(data['Jobs']).slice(-50);
+                        for (const [id, status] of entries) {
+                            let color = status === 'COMPLETED' ? '#4ade80' : (status === 'ERRORED' ? '#f87171' : '#00f2fe');
+                            tbody.innerHTML += `<tr><td style="padding: 10px 0; font-family: monospace; font-size: 14px; color: #cbd5e1;">${id}</td><td style="padding: 10px 0; color: ${color}; font-weight: 800; font-size: 14px;">${status}</td></tr>`;
+                        }
+                    }
+                })
+                .catch(err => console.error("Error fetching metrics:", err));
+        }, 500);
+
+        function enqueueJobs(isFlood) {
+            const count = isFlood ? 5000 : parseInt(document.getElementById('job-count').value);
+            fetch('/enqueue', { 
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ count: count })
+            }).catch(err => alert('Failed to enqueue jobs!'));
+        }
+
+        function updateConfig() {
+            const min = parseInt(document.getElementById('min-workers').value);
+            const max = parseInt(document.getElementById('max-workers').value);
+            fetch('/config', { 
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ min_workers: min, max_workers: max })
+            }).catch(err => alert('Failed to update config!'));
+        }
+    </script>
+</body>
+</html>
