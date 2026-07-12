@@ -1,4 +1,4 @@
-# Go Aether Queue Engine 🚀
+# Project Ponos: Go Task Queue Engine 🚀
 
 A high-performance, purely in-memory, dynamically auto-scaling background task engine built in Go.
 
@@ -36,5 +36,8 @@ Every job's lifecycle (`IN_PROGRESS`, `COMPLETED`, `ERRORED`) is tracked in real
    ```bash
    go run main.go
    ```
-3. Open `http://localhost:8080` in your browser.
-4. Click **FLOOD QUEUE** to push 5,000 jobs into the engine and watch the workers dynamically scale up in real-time!
+4. Open `http://localhost:8080` in your browser.
+5. Click **FLOOD QUEUE** to push 5,000 jobs into the engine and watch the workers dynamically scale up in real-time!
+
+## 📹Gif
+https://github.com/user-attachments/assets/dbfe81f6-b78c-40cf-8799-122cb0fcf8e1
